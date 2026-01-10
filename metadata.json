@@ -1,0 +1,5 @@
+{
+  "name": "AI Mastery Tracker",
+  "description": "A 10-week progress tracker for the AI Daily Brief New Year challenge, featuring gamified completion with confetti and local storage persistence.",
+  "requestFramePermissions": []
+}
