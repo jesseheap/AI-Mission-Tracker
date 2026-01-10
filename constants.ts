@@ -9,7 +9,8 @@ export const INITIAL_TASKS: Task[] = [
     description: "Vibe code an AI-powered system to track your goals and keep you accountable.",
     icon: "Target",
     completed: false,
-    completedDate: null
+    completedDate: null,
+    notes: ""
   },
   {
     id: 2,
@@ -18,7 +19,8 @@ export const INITIAL_TASKS: Task[] = [
     description: "Create your personal AI model guide - know which tools work best for what.",
     icon: "Compass",
     completed: false,
-    completedDate: null
+    completedDate: null,
+    notes: ""
   },
   {
     id: 3,
@@ -27,7 +29,8 @@ export const INITIAL_TASKS: Task[] = [
     description: "Master the art of AI-assisted deep research on any topic.",
     icon: "Flask",
     completed: false,
-    completedDate: null
+    completedDate: null,
+    notes: ""
   },
   {
     id: 4,
@@ -36,7 +39,8 @@ export const INITIAL_TASKS: Task[] = [
     description: "Transform raw data into insights using AI-powered analysis.",
     icon: "Chart",
     completed: false,
-    completedDate: null
+    completedDate: null,
+    notes: ""
   },
   {
     id: 5,
@@ -45,7 +49,8 @@ export const INITIAL_TASKS: Task[] = [
     description: "Explore multimodal AI - analyze and create with images.",
     icon: "Eye",
     completed: false,
-    completedDate: null
+    completedDate: null,
+    notes: ""
   },
   {
     id: 6,
@@ -54,7 +59,8 @@ export const INITIAL_TASKS: Task[] = [
     description: "Build automated flows to gather, process, and deliver information.",
     icon: "Refresh",
     completed: false,
-    completedDate: null
+    completedDate: null,
+    notes: ""
   },
   {
     id: 7,
@@ -63,7 +69,8 @@ export const INITIAL_TASKS: Task[] = [
     description: "Automate content creation and distribution across platforms.",
     icon: "Send",
     completed: false,
-    completedDate: null
+    completedDate: null,
+    notes: ""
   },
   {
     id: 8,
@@ -72,7 +79,8 @@ export const INITIAL_TASKS: Task[] = [
     description: "Supercharge your daily workflow with AI automation.",
     icon: "Zap",
     completed: false,
-    completedDate: null
+    completedDate: null,
+    notes: ""
   },
   {
     id: 9,
@@ -81,7 +89,8 @@ export const INITIAL_TASKS: Task[] = [
     description: "Master the art of prompting and context design for better AI outputs.",
     icon: "Brain",
     completed: false,
-    completedDate: null
+    completedDate: null,
+    notes: ""
   },
   {
     id: 10,
@@ -90,7 +99,8 @@ export const INITIAL_TASKS: Task[] = [
     description: "Bring it all together - build a complete AI-powered application.",
     icon: "Rocket",
     completed: false,
-    completedDate: null
+    completedDate: null,
+    notes: ""
   }
 ];
 

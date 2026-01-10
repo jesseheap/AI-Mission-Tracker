@@ -17,7 +17,12 @@ const App: React.FC = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved) as AppState;
-        setTasks(parsed.tasks);
+        // Ensure notes field exists for all tasks when loading legacy data
+        const hydratedTasks = parsed.tasks.map(t => ({
+          ...t,
+          notes: t.notes ?? ""
+        }));
+        setTasks(hydratedTasks);
       } catch (e) {
         setTasks(INITIAL_TASKS);
       }
@@ -64,6 +69,12 @@ const App: React.FC = () => {
       });
       return newTasks;
     });
+  }, []);
+
+  const handleUpdateNotes = useCallback((id: number, notes: string) => {
+    setTasks(prevTasks => prevTasks.map(task => 
+      task.id === id ? { ...task, notes } : task
+    ));
   }, []);
 
   const resetAll = () => {
@@ -141,6 +152,7 @@ const App: React.FC = () => {
               key={task.id} 
               task={task} 
               onToggle={handleToggleTask} 
+              onUpdateNotes={handleUpdateNotes}
             />
           ))}
 
@@ -182,7 +194,7 @@ const App: React.FC = () => {
             </div>
           </div>
           <p className="text-xs font-mono text-slate-400">
-            SYSTEM_VERSION: 1.0.4 | ENCRYPTED_STATUS: NOMINAL
+            SYSTEM_VERSION: 1.1.0 | ENCRYPTED_STATUS: NOMINAL
           </p>
         </footer>
       </main>

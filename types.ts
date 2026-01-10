@@ -7,6 +7,7 @@ export interface Task {
   icon: string;
   completed: boolean;
   completedDate: string | null;
+  notes: string;
 }
 
 export interface AppState {
