@@ -17,11 +17,17 @@ const App: React.FC = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved) as AppState;
-        // Ensure notes field exists for all tasks when loading legacy data
-        const hydratedTasks = parsed.tasks.map(t => ({
-          ...t,
-          notes: t.notes ?? ""
-        }));
+        
+        // Hydrate legacy data with new fields if missing
+        const hydratedTasks = parsed.tasks.map(t => {
+          const original = INITIAL_TASKS.find(it => it.id === t.id);
+          return {
+            ...t,
+            notes: t.notes ?? "",
+            briefing: t.briefing || original?.briefing || "",
+            tips: t.tips || original?.tips || []
+          };
+        });
         setTasks(hydratedTasks);
       } catch (e) {
         setTasks(INITIAL_TASKS);
@@ -78,7 +84,7 @@ const App: React.FC = () => {
   }, []);
 
   const resetAll = () => {
-    if (confirm('Are you sure you want to reset all progress?')) {
+    if (confirm('Are you sure you want to reset all progress? This will revert to the latest mission brief data.')) {
       setTasks(INITIAL_TASKS);
     }
   };
@@ -130,7 +136,7 @@ const App: React.FC = () => {
             10-Week Challenge
           </h1>
           <p className="text-slate-500 max-w-lg mx-auto font-medium">
-            Master the cutting edge of artificial intelligence. Track your evolution through the 10 core missions.
+            Master the cutting edge of artificial intelligence. Track your evolution through the 10 core missions. Expand missions for detailed briefings.
           </p>
         </header>
 
@@ -194,7 +200,7 @@ const App: React.FC = () => {
             </div>
           </div>
           <p className="text-xs font-mono text-slate-400">
-            SYSTEM_VERSION: 1.1.0 | ENCRYPTED_STATUS: NOMINAL
+            SYSTEM_VERSION: 1.2.0 | ENCRYPTED_STATUS: NOMINAL
           </p>
         </footer>
       </main>

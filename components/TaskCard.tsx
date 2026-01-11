@@ -11,12 +11,13 @@ interface TaskCardProps {
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onUpdateNotes }) => {
   const [showNotes, setShowNotes] = useState(false);
+  const [showBriefing, setShowBriefing] = useState(false);
 
   return (
     <div 
       className={`retro-card p-6 rounded-xl cursor-pointer select-none overflow-hidden transition-all duration-300 ${task.completed ? 'checked-card' : 'bg-white'}`}
       onClick={(e) => {
-        // Prevent toggling completion if clicking buttons or textarea
+        // Prevent toggling completion if clicking buttons or inputs
         if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).tagName === 'TEXTAREA') return;
         onToggle(task.id);
       }}
@@ -53,15 +54,24 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onUpdateNotes }) =>
               </span>
             )}
           </div>
-          <h3 className={`text-lg font-bold leading-tight mb-1 ${task.completed ? 'text-slate-500 line-through decoration-slate-300' : 'text-slate-900'}`}>
-            {task.title}
-          </h3>
+          <div className="flex items-start justify-between gap-2">
+            <h3 className={`text-lg font-bold leading-tight mb-1 flex-1 ${task.completed ? 'text-slate-500 line-through decoration-slate-300' : 'text-slate-900'}`}>
+              {task.title}
+            </h3>
+            <button 
+              onClick={() => setShowBriefing(!showBriefing)}
+              className="p-1 rounded-full hover:bg-slate-100 transition-colors"
+              title="Show Mission Details"
+            >
+              <Icon name={showBriefing ? "ChevronUp" : "ChevronDown"} className="w-5 h-5 text-slate-400" />
+            </button>
+          </div>
           <p className={`text-sm ${task.completed ? 'text-slate-400' : 'text-slate-600'}`}>
             {task.description}
           </p>
 
           {/* Action Row */}
-          <div className="mt-3 flex items-center gap-3">
+          <div className="mt-4 flex items-center gap-3">
             <button 
               onClick={() => setShowNotes(!showNotes)}
               className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide transition-colors
@@ -93,13 +103,40 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onUpdateNotes }) =>
         </div>
       </div>
 
+      {/* Expandable Briefing Area */}
+      {showBriefing && (
+        <div className="mt-6 pt-6 border-t border-slate-100 space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl p-5">
+            <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-600 mb-2">Mission Briefing</h4>
+            <p className="text-sm text-slate-700 leading-relaxed font-medium">
+              {task.briefing}
+            </p>
+          </div>
+
+          <div>
+            <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-600 mb-3 pl-1">Tips & Tactics</h4>
+            <ul className="space-y-3">
+              {task.tips.map((tip, idx) => (
+                <li key={idx} className="flex items-start gap-3">
+                  <span className="w-5 h-5 flex-shrink-0 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-bold">
+                    {idx + 1}
+                  </span>
+                  <span className="text-xs text-slate-600 leading-relaxed">{tip}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
       {/* Expandable Notes Area */}
       {showNotes && (
         <div className="mt-4 pt-4 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-200">
+          <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-2 pl-1">Operator Log</h4>
           <textarea
             value={task.notes}
             onChange={(e) => onUpdateNotes(task.id, e.target.value)}
-            placeholder="Type your notes here... links, key takeaways, progress thoughts..."
+            placeholder="Log your progress, findings, or links..."
             className="w-full h-24 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none placeholder:text-slate-300"
             onClick={(e) => e.stopPropagation()}
           />

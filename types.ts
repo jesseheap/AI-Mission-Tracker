@@ -8,6 +8,8 @@ export interface Task {
   completed: boolean;
   completedDate: string | null;
   notes: string;
+  briefing: string;
+  tips: string[];
 }
 
 export interface AppState {
