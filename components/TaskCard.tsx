@@ -12,18 +12,21 @@ interface TaskCardProps {
 const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onUpdateNotes }) => {
   const [showNotes, setShowNotes] = useState(false);
   const [showBriefing, setShowBriefing] = useState(false);
+  
+  const charCount = task.notes.length;
+  const isApproachingLimit = charCount > 1800;
+  const isAtLimit = charCount >= 2000;
 
   return (
     <div 
       className={`retro-card p-6 rounded-xl cursor-pointer select-none overflow-hidden transition-all duration-300 ${task.completed ? 'checked-card' : 'bg-white'}`}
       onClick={(e) => {
-        // Prevent toggling completion if clicking buttons or inputs
-        if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).tagName === 'TEXTAREA') return;
+        const target = e.target as HTMLElement;
+        if (target.closest('button') || target.tagName === 'TEXTAREA') return;
         onToggle(task.id);
       }}
     >
       <div className="flex items-start gap-4">
-        {/* Week Icon Badge */}
         <div className="relative flex-shrink-0">
           <div 
             className={`w-14 h-14 rounded-xl flex items-center justify-center border-2 transition-colors
@@ -42,7 +45,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onUpdateNotes }) =>
           )}
         </div>
 
-        {/* Content */}
         <div className="flex-1">
           <div className="flex items-center justify-between mb-1">
             <span className={`text-[10px] font-bold uppercase tracking-widest ${task.completed ? 'text-slate-400' : 'text-indigo-600'}`}>
@@ -50,7 +52,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onUpdateNotes }) =>
             </span>
             {task.completedDate && (
               <span className="text-[10px] font-mono text-slate-400 italic">
-                COMPLETED: {task.completedDate}
+                LOG_DONE: {task.completedDate}
               </span>
             )}
           </div>
@@ -59,9 +61,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onUpdateNotes }) =>
               {task.title}
             </h3>
             <button 
-              onClick={() => setShowBriefing(!showBriefing)}
+              onClick={(e) => { e.stopPropagation(); setShowBriefing(!showBriefing); }}
               className="p-1 rounded-full hover:bg-slate-100 transition-colors"
-              title="Show Mission Details"
+              title="Mission Details"
             >
               <Icon name={showBriefing ? "ChevronUp" : "ChevronDown"} className="w-5 h-5 text-slate-400" />
             </button>
@@ -70,16 +72,15 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onUpdateNotes }) =>
             {task.description}
           </p>
 
-          {/* Action Row */}
           <div className="mt-4 flex items-center gap-3">
             <button 
-              onClick={() => setShowNotes(!showNotes)}
+              onClick={(e) => { e.stopPropagation(); setShowNotes(!showNotes); }}
               className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide transition-colors
                 ${showNotes ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}
               `}
             >
               <Icon name="FileText" className="w-3 h-3" />
-              {showNotes ? 'Hide Notes' : (task.notes ? 'Edit Notes' : 'Add Note')}
+              {showNotes ? 'Close Log' : (task.notes ? 'View Log' : 'Add Log')}
             </button>
             {task.notes && !showNotes && (
               <span className="text-[10px] font-mono text-indigo-400 truncate max-w-[150px]">
@@ -89,7 +90,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onUpdateNotes }) =>
           </div>
         </div>
 
-        {/* Checkbox */}
         <div className="flex items-center self-start pt-6">
           <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all
             ${task.completed ? 'bg-green-500 border-green-500' : 'bg-white border-slate-300'}
@@ -103,25 +103,21 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onUpdateNotes }) =>
         </div>
       </div>
 
-      {/* Expandable Briefing Area */}
       {showBriefing && (
-        <div className="mt-6 pt-6 border-t border-slate-100 space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl p-5">
-            <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-600 mb-2">Mission Briefing</h4>
-            <p className="text-sm text-slate-700 leading-relaxed font-medium">
+        <div className="mt-6 pt-6 border-t border-slate-100 space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 mb-2">Technical Brief</h4>
+            <p className="text-sm text-slate-700 leading-relaxed">
               {task.briefing}
             </p>
           </div>
-
-          <div>
-            <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-600 mb-3 pl-1">Tips & Tactics</h4>
-            <ul className="space-y-3">
+          <div className="pl-2">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Implementation Tips</h4>
+            <ul className="space-y-2">
               {task.tips.map((tip, idx) => (
-                <li key={idx} className="flex items-start gap-3">
-                  <span className="w-5 h-5 flex-shrink-0 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-[10px] font-bold">
-                    {idx + 1}
-                  </span>
-                  <span className="text-xs text-slate-600 leading-relaxed">{tip}</span>
+                <li key={idx} className="flex items-start gap-2 text-xs text-slate-500">
+                  <span className="text-indigo-600 font-bold">•</span>
+                  {tip}
                 </li>
               ))}
             </ul>
@@ -129,15 +125,25 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onUpdateNotes }) =>
         </div>
       )}
 
-      {/* Expandable Notes Area */}
       {showNotes && (
         <div className="mt-4 pt-4 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-200">
-          <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-2 pl-1">Operator Log</h4>
+          <div className="flex justify-between items-center mb-2 px-1">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Operator Notes</h4>
+            <div className="flex items-center gap-2">
+              <span className={`text-[9px] font-mono font-bold ${isAtLimit ? 'text-red-500' : isApproachingLimit ? 'text-amber-500' : 'text-slate-400'}`}>
+                {charCount} / 2000
+              </span>
+              {isAtLimit && <span className="text-[9px] font-bold text-red-500 uppercase">Limit Reached</span>}
+            </div>
+          </div>
           <textarea
             value={task.notes}
             onChange={(e) => onUpdateNotes(task.id, e.target.value)}
-            placeholder="Log your progress, findings, or links..."
-            className="w-full h-24 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none placeholder:text-slate-300"
+            maxLength={2000}
+            placeholder="Document your findings and insights..."
+            className={`w-full h-24 p-3 bg-slate-50 border rounded-lg text-sm font-mono focus:ring-2 outline-none resize-none transition-all
+              ${isAtLimit ? 'border-red-300 focus:ring-red-200' : 'border-slate-200 focus:ring-indigo-100'}
+            `}
             onClick={(e) => e.stopPropagation()}
           />
         </div>

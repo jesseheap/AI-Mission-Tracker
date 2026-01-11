@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import confetti from 'https://cdn.skypack.dev/canvas-confetti';
 import { Task, AppState } from './types';
 import { INITIAL_TASKS, STORAGE_KEY } from './constants';
 import TaskCard from './components/TaskCard';
@@ -11,25 +10,45 @@ const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Load state from local storage
+  // Utility to clean non-printable control characters
+  const sanitizeInput = (str: string) => {
+    return str.replace(/[\x00-\x1F\x7F]/g, "").substring(0, 2000);
+  };
+
+  // Load state from local storage with schema validation
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
-        const parsed = JSON.parse(saved) as AppState;
+        const parsed = JSON.parse(saved);
         
-        // Hydrate legacy data with new fields if missing
-        const hydratedTasks = parsed.tasks.map(t => {
-          const original = INITIAL_TASKS.find(it => it.id === t.id);
-          return {
-            ...t,
-            notes: t.notes ?? "",
-            briefing: t.briefing || original?.briefing || "",
-            tips: t.tips || original?.tips || []
-          };
-        });
-        setTasks(hydratedTasks);
+        // Hardened validation: Verify parsed is an object with a tasks array
+        if (parsed && typeof parsed === 'object' && Array.isArray(parsed.tasks)) {
+          const validatedTasks = parsed.tasks.map((t: any) => {
+            const original = INITIAL_TASKS.find(it => it.id === t.id);
+            if (!original) return null; // Drop tasks that no longer exist in missions
+
+            // Basic type checking and field fallback
+            return {
+              ...original,
+              completed: typeof t.completed === 'boolean' ? t.completed : original.completed,
+              completedDate: typeof t.completedDate === 'string' ? t.completedDate : (t.completed ? new Date().toLocaleDateString() : null),
+              notes: sanitizeInput(typeof t.notes === 'string' ? t.notes : ""),
+            } as Task;
+          }).filter((t): t is Task => t !== null);
+
+          // Ensure we have all current missions even if some were missing from storage
+          const finalSet = INITIAL_TASKS.map(it => {
+            const existing = validatedTasks.find(vt => vt.id === it.id);
+            return existing || it;
+          });
+
+          setTasks(finalSet);
+        } else {
+          throw new Error("Invalid structure");
+        }
       } catch (e) {
+        console.warn("Storage corruption detected. Reverting to mission defaults.");
         setTasks(INITIAL_TASKS);
       }
     } else {
@@ -50,21 +69,15 @@ const App: React.FC = () => {
   }, [tasks, loading]);
 
   const handleToggleTask = useCallback((id: number) => {
+    const targetTask = tasks.find(t => t.id === id);
+    if (!targetTask) return;
+
+    const willBeCompleted = !targetTask.completed;
+
     setTasks(prevTasks => {
-      const newTasks = prevTasks.map(task => {
+      return prevTasks.map(task => {
         if (task.id === id) {
           const nowCompleted = !task.completed;
-          
-          // Trigger confetti if task is being completed
-          if (nowCompleted) {
-            confetti({
-              particleCount: 150,
-              spread: 70,
-              origin: { y: 0.6 },
-              colors: ['#0d9488', '#4f46e5', '#f59e0b', '#10b981']
-            });
-          }
-
           return {
             ...task,
             completed: nowCompleted,
@@ -73,18 +86,33 @@ const App: React.FC = () => {
         }
         return task;
       });
-      return newTasks;
     });
-  }, []);
+
+    if (willBeCompleted) {
+      const fire = (window as any).confetti;
+      if (typeof fire === 'function') {
+        fire({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#0d9488', '#4f46e5', '#f59e0b', '#10b981', '#6366f1'],
+          zIndex: 9999,
+          disableForReducedMotion: true
+        });
+      }
+    }
+  }, [tasks]);
 
   const handleUpdateNotes = useCallback((id: number, notes: string) => {
+    // Sanitize and cap during update
+    const cleanedNotes = sanitizeInput(notes);
     setTasks(prevTasks => prevTasks.map(task => 
-      task.id === id ? { ...task, notes } : task
+      task.id === id ? { ...task, notes: cleanedNotes } : task
     ));
   }, []);
 
   const resetAll = () => {
-    if (confirm('Are you sure you want to reset all progress? This will revert to the latest mission brief data.')) {
+    if (confirm('System override: Are you sure you want to reset all progress?')) {
       setTasks(INITIAL_TASKS);
     }
   };
@@ -95,7 +123,6 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-20">
-      {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b-2 border-slate-200">
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="flex items-center justify-between h-16">
@@ -128,7 +155,6 @@ const App: React.FC = () => {
         </div>
       </nav>
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-12 max-w-3xl">
         <header className="text-center mb-12">
           <p className="text-sm font-bold text-indigo-600 uppercase tracking-[0.3em] mb-3">Target Objective: Level Up</p>
@@ -136,21 +162,19 @@ const App: React.FC = () => {
             10-Week Challenge
           </h1>
           <p className="text-slate-500 max-w-lg mx-auto font-medium">
-            Master the cutting edge of artificial intelligence. Track your evolution through the 10 core missions. Expand missions for detailed briefings.
+            Master the cutting edge of artificial intelligence. Your progress is saved locally. Complete missions to unlock the full potential of AI.
           </p>
         </header>
 
-        {/* Mission Tracker Component */}
         <MissionTracker 
           completedCount={completedCount} 
           totalCount={tasks.length} 
         />
 
-        {/* Task List */}
         <div className="space-y-4">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Mission Registry</h2>
-            <span className="text-xs font-mono text-slate-400">{completedCount} of {tasks.length} tasks ready</span>
+            <span className="text-xs font-mono text-slate-400">{completedCount} of {tasks.length} missions active</span>
           </div>
           
           {tasks.map(task => (
@@ -162,11 +186,10 @@ const App: React.FC = () => {
             />
           ))}
 
-          {/* Bonus Task Section */}
           <div className="mt-12 opacity-80 grayscale hover:grayscale-0 transition-all">
             <div className="flex items-center gap-2 mb-4">
               <div className="h-px flex-1 bg-slate-200"></div>
-              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Classified: Bonus Mission</span>
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Classified</span>
               <div className="h-px flex-1 bg-slate-200"></div>
             </div>
             <div className="retro-card p-6 rounded-xl bg-slate-50 border-dashed">
@@ -176,31 +199,19 @@ const App: React.FC = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Week 11 • Bonus</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Final Evaluation</span>
                   </div>
-                  <h3 className="font-bold text-slate-700">Agent Evaluation Gauntlet</h3>
-                  <p className="text-sm text-slate-500">BONUS: Put AI agents through their paces with rigorous testing.</p>
+                  <h3 className="font-bold text-slate-700">The Grand Synthesis</h3>
+                  <p className="text-sm text-slate-500">Available upon completion of all 10 core missions.</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Footer */}
         <footer className="mt-20 pt-8 border-t border-slate-200 text-center">
-          <div className="flex justify-center gap-6 mb-4">
-            <div className="flex flex-col items-center">
-              <span className="text-2xl font-bold text-slate-900">{completedCount}</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Completed</span>
-            </div>
-            <div className="w-px h-10 bg-slate-200"></div>
-            <div className="flex flex-col items-center">
-              <span className="text-2xl font-bold text-slate-900">{tasks.length - completedCount}</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Remaining</span>
-            </div>
-          </div>
           <p className="text-xs font-mono text-slate-400">
-            SYSTEM_VERSION: 1.2.0 | ENCRYPTED_STATUS: NOMINAL
+            SYSTEM_STATUS: STABLE | BUILD: 2025.1.5
           </p>
         </footer>
       </main>
