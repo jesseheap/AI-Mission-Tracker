@@ -10,7 +10,7 @@ const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Utility to clean non-printable control characters
+  // Utility to clean non-printable control characters and enforce length
   const sanitizeInput = (str: string) => {
     return str.replace(/[\x00-\x1F\x7F]/g, "").substring(0, 2000);
   };
@@ -22,13 +22,11 @@ const App: React.FC = () => {
       try {
         const parsed = JSON.parse(saved);
         
-        // Hardened validation: Verify parsed is an object with a tasks array
         if (parsed && typeof parsed === 'object' && Array.isArray(parsed.tasks)) {
           const validatedTasks = parsed.tasks.map((t: any) => {
             const original = INITIAL_TASKS.find(it => it.id === t.id);
-            if (!original) return null; // Drop tasks that no longer exist in missions
+            if (!original) return null;
 
-            // Basic type checking and field fallback
             return {
               ...original,
               completed: typeof t.completed === 'boolean' ? t.completed : original.completed,
@@ -37,7 +35,6 @@ const App: React.FC = () => {
             } as Task;
           }).filter((t): t is Task => t !== null);
 
-          // Ensure we have all current missions even if some were missing from storage
           const finalSet = INITIAL_TASKS.map(it => {
             const existing = validatedTasks.find(vt => vt.id === it.id);
             return existing || it;
@@ -88,23 +85,51 @@ const App: React.FC = () => {
       });
     });
 
+    // Multi-burst confetti for maximum dopamine hit
     if (willBeCompleted) {
       const fire = (window as any).confetti;
       if (typeof fire === 'function') {
-        fire({
-          particleCount: 150,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ['#0d9488', '#4f46e5', '#f59e0b', '#10b981', '#6366f1'],
+        const count = 150;
+        const defaults = {
+          origin: { y: 0.7 },
           zIndex: 9999,
-          disableForReducedMotion: true
+          colors: ['#14b8a6', '#6366f1', '#f59e0b', '#10b981', '#ffffff']
+        };
+
+        // Central burst
+        fire({
+          ...defaults,
+          particleCount: count,
+          spread: 70,
+          scalar: 1.2
         });
+
+        // Left flank
+        setTimeout(() => {
+          fire({
+            ...defaults,
+            particleCount: 40,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 }
+          });
+        }, 150);
+
+        // Right flank
+        setTimeout(() => {
+          fire({
+            ...defaults,
+            particleCount: 40,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 }
+          });
+        }, 150);
       }
     }
   }, [tasks]);
 
   const handleUpdateNotes = useCallback((id: number, notes: string) => {
-    // Sanitize and cap during update
     const cleanedNotes = sanitizeInput(notes);
     setTasks(prevTasks => prevTasks.map(task => 
       task.id === id ? { ...task, notes: cleanedNotes } : task
@@ -112,7 +137,7 @@ const App: React.FC = () => {
   }, []);
 
   const resetAll = () => {
-    if (confirm('System override: Are you sure you want to reset all progress?')) {
+    if (confirm('System override: Are you sure you want to reset all progress? This will purge your local operator logs.')) {
       setTasks(INITIAL_TASKS);
     }
   };
@@ -174,7 +199,7 @@ const App: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Mission Registry</h2>
-            <span className="text-xs font-mono text-slate-400">{completedCount} of {tasks.length} missions active</span>
+            <span className="text-xs font-mono text-slate-400">{completedCount} / {tasks.length} MISSIONS COMPLETE</span>
           </div>
           
           {tasks.map(task => (
@@ -210,8 +235,8 @@ const App: React.FC = () => {
         </div>
 
         <footer className="mt-20 pt-8 border-t border-slate-200 text-center">
-          <p className="text-xs font-mono text-slate-400">
-            SYSTEM_STATUS: STABLE | BUILD: 2025.1.5
+          <p className="text-xs font-mono text-slate-400 uppercase tracking-widest">
+            Operator Secure Environment | System v2.0.1
           </p>
         </footer>
       </main>
